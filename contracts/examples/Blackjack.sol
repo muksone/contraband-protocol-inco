@@ -48,22 +48,28 @@ contract Blackjack is ConfidentialDeck {
 
     // ── Play ────────────────────────────────────────────────────────────────
 
-    /// @notice Bet and get dealt in. House pays the shuffle fee.
-    function deal() external payable inState(State.Idle) {
+    /// @notice Bet and get dealt in. Playable again once the last hand is done
+    ///         and its winnings are claimed. House pays the shuffle fee.
+    function deal() external payable {
+        require(state == State.Idle || state == State.Done, "hand in progress");
+        require(winnings == 0, "claim your winnings first");
         require(msg.value > 0, "bet required");
         require(address(this).balance >= msg.value * 2 + deckFee(DECK), "house underfunded");
 
+        delete playerCards; // fresh hand
+        delete dealerCards;
         player = msg.sender;
         bet = msg.value;
 
         _newShuffledDeck(DECK); // KIT: shuffle
 
-        // two private cards; only they peek
-        playerCards.push(_dealTo(msg.sender)); // KIT: private deal
-        playerCards.push(_dealTo(msg.sender)); // KIT: private deal
+        // Your two cards are dealt FACE UP (like a real table) - no signature to
+        // view them. The confidential part is the dealer's hole card + the shoe.
+        playerCards.push(_dealFaceUp()); // KIT: public
+        playerCards.push(_dealFaceUp()); // KIT: public
 
-        // dealer: public upcard, then hidden buffer
-        dealerCards.push(_dealFaceUp()); // KIT: public reveal
+        // dealer: one public upcard, then a hidden hole + buffer
+        dealerCards.push(_dealFaceUp()); // KIT: public upcard
         for (uint256 i = 1; i < DEALER_CARDS; i++) {
             dealerCards.push(_draw()); // KIT: hidden draw
         }
@@ -72,21 +78,17 @@ contract Blackjack is ConfidentialDeck {
         emit GameStarted(msg.sender, msg.value);
     }
 
-    /// @notice Hit: take another private card.
+    /// @notice Hit: take another face-up card.
     function hit() external onlyPlayer inState(State.PlayerTurn) {
         require(playerCards.length < MAX_PLAYER_CARDS, "hand full");
-        playerCards.push(_dealTo(msg.sender)); // KIT: private deal
+        playerCards.push(_dealFaceUp()); // KIT: public
         emit PlayerHit(playerCards.length);
     }
 
-    /// @notice Stand: reveal every card so anyone can settle.
-    /// Un-griefable; a busted hand can't be hidden.
+    /// @notice Stand: reveal the dealer's hidden cards so anyone can settle.
     function stand() external onlyPlayer inState(State.PlayerTurn) {
-        for (uint256 i = 0; i < playerCards.length; i++) {
-            _revealCard(playerCards[i]); // KIT: public reveal
-        }
         for (uint256 i = 1; i < dealerCards.length; i++) {
-            _revealCard(dealerCards[i]); // KIT: public reveal
+            _revealCard(dealerCards[i]); // KIT: open dealer's hidden cards
         }
         state = State.Revealing;
         revealDeadline = block.timestamp + REVEAL_TIMEOUT;

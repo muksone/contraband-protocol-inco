@@ -92,9 +92,9 @@ describe("Blackjack (Inco covalidator)", function () {
     // Player bets and is dealt in.
     await tx((await at(player)).write.deal({ value: bet, account: player.account }));
 
-    // Peek hole cards; only the player can.
+    // Player cards are face-up (public) - readable with no signature.
     const holeHandles = (await game.read.playerHandHandles()) as readonly HexString[];
-    const hole = await withRetry<any[]>(() => zap.attestedDecrypt(player, [...holeHandles]));
+    const hole = await withRetry<any[]>(() => zap.attestedReveal([...holeHandles]));
     const RANKS = "23456789TJQKA";
     console.log(
       "      player hole:",
@@ -102,10 +102,17 @@ describe("Blackjack (Inco covalidator)", function () {
     );
     expect(hole.length).to.equal(2);
 
-    // Dealer upcard is public.
+    // Dealer upcard is public; its hole card stays hidden until stand.
     const dealerHandles = (await game.read.dealerHandHandles()) as readonly HexString[];
     const [up] = await withRetry<any[]>(() => zap.attestedReveal([dealerHandles[0]]));
     expect(Number(up.plaintext.value)).to.be.within(1, 52);
+    let hidden = false;
+    try {
+      await zap.attestedReveal([dealerHandles[1]]); // hole card not revealed yet
+    } catch {
+      hidden = true;
+    }
+    expect(hidden, "dealer hole card must stay hidden until stand").to.equal(true);
 
     // Hit once, then stand.
     await tx((await at(player)).write.hit({ account: player.account }));
@@ -129,5 +136,9 @@ describe("Blackjack (Inco covalidator)", function () {
       expect((await game.read.winnings()) as bigint).to.equal(0n);
     }
     console.log(`      outcome payout: ${won}`);
+
+    // Replay: a fresh hand deals again once the last is done + claimed.
+    await tx((await at(player)).write.deal({ value: bet, account: player.account }));
+    expect(Number(await game.read.state())).to.equal(1); // PlayerTurn again
   });
 });

@@ -6,82 +6,110 @@ import {ConfidentialDeck} from "../kit/ConfidentialDeck.sol";
 import {CardLib} from "../CardLib.sol";
 
 /// @title War - the smallest game on ConfidentialDeck.
-/// @notice One private card each; higher rank wins. Read this first.
+/// @notice One private card each; higher rank wins. Auto-matchmaking: join
+///         drops you into an open table, or opens a new one if all are busy.
 contract War is ConfidentialDeck {
     using CardLib for uint8;
 
-    uint256 public immutable bet;
-    address[2] public players;
-    euint256[2] private cards; // one private card per seat
-    uint8 public seated;
-    uint256 public winnings; // pull-payment credit
-    mapping(address => uint256) public payout;
-
     enum State { Open, Dealt, Revealing, Done }
-    State public state;
 
-    event Joined(address indexed player, uint8 seat);
-    event Dealt();
-    event Showdown();
-    event Result(uint8 winnerSeat, uint256 amount); // winnerSeat 2 == split
+    struct Room {
+        address[2] players;
+        euint256[2] cards;
+        uint8 seated;
+        uint256 pot; // winnable here (bets minus the shuffle fee)
+        uint8 winnerSeat; // 0/1 winner, 2 split, 3 unset
+        State state;
+    }
+
+    uint256 public immutable bet;
+    Room[] private rooms;
+    mapping(address => uint256) public payout; // pull-payment credit across all tables
+
+    event TableOpened(uint256 indexed roomId);
+    event Joined(uint256 indexed roomId, address indexed player, uint8 seat);
+    event Dealt(uint256 indexed roomId);
+    event Showdown(uint256 indexed roomId);
+    event Result(uint256 indexed roomId, uint8 winnerSeat, uint256 amount);
 
     constructor(uint256 _bet) {
         require(_bet > 0, "bet=0");
         bet = _bet;
     }
 
-    /// @notice Join with exactly `bet`; 2nd player triggers deal.
-    function join() external payable {
-        require(state == State.Open, "not open");
+    /// @notice Sit at an open table (or a fresh one) with exactly `bet`.
+    function join() external payable returns (uint256 roomId) {
         require(msg.value == bet, "wrong bet");
-        require(msg.sender != players[0], "already seated");
-        players[seated] = msg.sender;
-        emit Joined(msg.sender, seated);
-        seated += 1;
-        if (seated == 2) _deal();
+        roomId = _matchRoom();
+        Room storage r = rooms[roomId];
+        r.players[r.seated] = msg.sender;
+        r.pot += msg.value;
+        emit Joined(roomId, msg.sender, r.seated);
+        r.seated += 1;
+        if (r.seated == 2) _deal(roomId);
     }
 
-    function _deal() private {
-        _newShuffledDeck(52); // KIT: shuffle (fee from the two bets)
-        cards[0] = _dealTo(players[0]); // KIT: private deal to seat 0
-        cards[1] = _dealTo(players[1]); // KIT: private deal to seat 1
-        state = State.Dealt;
-        emit Dealt();
-    }
-
-    /// @notice Open both cards to everyone. Un-griefable.
-    function showdown() external {
-        require(state == State.Dealt, "not dealt");
-        _revealCard(cards[0]); // KIT: open to everyone
-        _revealCard(cards[1]); // KIT: open to everyone
-        state = State.Revealing;
-        emit Showdown();
-    }
-
-    /// @notice Post attested values and pay the winner.
-    function settle(uint256[2] calldata values, bytes[][2] calldata sigs) external {
-        require(state == State.Revealing, "call showdown first");
-        uint8 r0 = CardLib.rankOf(CardLib.toId(_verifyValue(cards[0], values[0], sigs[0]))); // KIT: verify
-        uint8 r1 = CardLib.rankOf(CardLib.toId(_verifyValue(cards[1], values[1], sigs[1]))); // KIT: verify
-
-        uint256 pot = bet * 2;
-        if (r0 > r1) {
-            payout[players[0]] = pot;
-            emit Result(0, pot);
-        } else if (r1 > r0) {
-            payout[players[1]] = pot;
-            emit Result(1, pot);
-        } else {
-            payout[players[0]] = bet; // tie: split
-            payout[players[1]] = bet;
-            emit Result(2, pot);
+    /// @dev Reuse an open table with a free seat, else open a new one.
+    function _matchRoom() private returns (uint256) {
+        for (uint256 i = rooms.length; i > 0; i--) {
+            Room storage r = rooms[i - 1];
+            if (r.state == State.Open && r.seated < 2 && r.players[0] != msg.sender) return i - 1;
         }
-        state = State.Done;
+        rooms.push();
+        uint256 id = rooms.length - 1;
+        rooms[id].state = State.Open;
+        rooms[id].winnerSeat = 3;
+        emit TableOpened(id);
+        return id;
     }
 
-    /// @notice Pull your winnings (reentrancy-safe).
+    function _deal(uint256 roomId) private {
+        Room storage r = rooms[roomId];
+        _newShuffledDeck(52); // KIT: shuffle
+        uint256 fee = deckFee(52); // shuffle is paid from this table's pot
+        r.pot = r.pot > fee ? r.pot - fee : 0;
+        r.cards[0] = _dealTo(r.players[0]); // KIT: private deal to seat 0
+        r.cards[1] = _dealTo(r.players[1]); // KIT: private deal to seat 1
+        r.state = State.Dealt;
+        emit Dealt(roomId);
+    }
+
+    /// @notice Open both cards at a table. Un-griefable.
+    function showdown(uint256 roomId) external {
+        Room storage r = rooms[roomId];
+        require(r.state == State.Dealt, "not dealt");
+        _revealCard(r.cards[0]); // KIT: open to everyone
+        _revealCard(r.cards[1]); // KIT: open to everyone
+        r.state = State.Revealing;
+        emit Showdown(roomId);
+    }
+
+    /// @notice Post attested values and credit the winner at a table.
+    function settle(uint256 roomId, uint256[2] calldata values, bytes[][2] calldata sigs) external {
+        Room storage r = rooms[roomId];
+        require(r.state == State.Revealing, "call showdown first");
+        uint8 a = CardLib.rankOf(CardLib.toId(_verifyValue(r.cards[0], values[0], sigs[0]))); // KIT: verify
+        uint8 b = CardLib.rankOf(CardLib.toId(_verifyValue(r.cards[1], values[1], sigs[1]))); // KIT: verify
+
+        uint256 p = r.pot;
+        if (a > b) {
+            payout[r.players[0]] += p;
+            r.winnerSeat = 0;
+        } else if (b > a) {
+            payout[r.players[1]] += p;
+            r.winnerSeat = 1;
+        } else {
+            uint256 half = p / 2;
+            payout[r.players[0]] += half;
+            payout[r.players[1]] += p - half;
+            r.winnerSeat = 2;
+        }
+        r.state = State.Done;
+        emit Result(roomId, r.winnerSeat, p);
+    }
+
+    /// @notice Pull winnings from any tables you won (reentrancy-safe).
     function claim() external {
-        require(state == State.Done, "not done");
         uint256 amount = payout[msg.sender];
         require(amount > 0, "nothing");
         payout[msg.sender] = 0;
@@ -89,8 +117,34 @@ contract War is ConfidentialDeck {
         require(ok, "transfer failed");
     }
 
-    /// @notice Your private card handle (decrypt off-chain).
-    function myCardHandle(uint8 seat) external view returns (bytes32) {
-        return euint256.unwrap(cards[seat]);
+    // ── Views for the frontend ──────────────────────────────────────────────
+
+    function roomCount() external view returns (uint256) {
+        return rooms.length;
+    }
+
+    /// @notice A table's public state (cards stay encrypted; only handles/rank leak).
+    function roomOf(uint256 id)
+        external
+        view
+        returns (address p0, address p1, uint8 seated, uint8 winnerSeat, uint8 state, uint256 pot)
+    {
+        Room storage r = rooms[id];
+        return (r.players[0], r.players[1], r.seated, r.winnerSeat, uint8(r.state), r.pot);
+    }
+
+    /// @notice The latest table a player sits at, or -1 if none. Frontend uses
+    ///         this to find "your" table after matchmaking placed you.
+    function roomOfPlayer(address who) external view returns (int256) {
+        for (uint256 i = rooms.length; i > 0; i--) {
+            Room storage r = rooms[i - 1];
+            if (r.players[0] == who || r.players[1] == who) return int256(i - 1);
+        }
+        return -1;
+    }
+
+    /// @notice A seat's private card handle at a table (decrypt off-chain).
+    function cardHandle(uint256 id, uint8 seat) external view returns (bytes32) {
+        return euint256.unwrap(rooms[id].cards[seat]);
     }
 }

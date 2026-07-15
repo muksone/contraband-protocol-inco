@@ -14,6 +14,7 @@ contract Raffle is ConfidentialDeck {
     euint256 private winningTicket; // hidden until the draw
     address public winner;
     uint256 public prize;
+    uint256 public round; // current draw; a new round reopens ticket sales
 
     enum State { Selling, Drawing, Paid }
     State public state;
@@ -21,6 +22,7 @@ contract Raffle is ConfidentialDeck {
     event Entered(address indexed player, uint256 ticket);
     event Drawn(bytes32 winningTicketHandle);
     event Won(address indexed winner, uint256 prize);
+    event NewRound(uint256 round);
 
     constructor(uint256 _ticketPrice, uint16 _minEntrants) {
         require(_ticketPrice > 0 && _minEntrants >= 2, "bad config");
@@ -63,6 +65,17 @@ contract Raffle is ConfidentialDeck {
         (bool ok,) = payable(winner).call{value: prize}("");
         require(ok, "payout failed");
         emit Won(winner, prize);
+    }
+
+    /// @notice Reopen ticket sales for a fresh draw. Anyone can call once paid.
+    function newRound() external {
+        require(state == State.Paid, "not finished");
+        delete entrants;
+        winner = address(0);
+        prize = 0;
+        round += 1;
+        state = State.Selling;
+        emit NewRound(round);
     }
 
     function winningTicketHandle() external view returns (bytes32) {

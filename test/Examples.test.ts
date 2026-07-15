@@ -40,18 +40,19 @@ describe("ConfidentialDeck examples (Inco covalidator)", function () {
     hre.viem.getContractAt(name, addr, { client: { wallet: w } });
 
   // War
-  it("War: private card each, reveal, higher rank wins the pot", async function () {
+  it("War: matchmaking, private cards, reveal, winner claims, new table opens", async function () {
     const bet = parseEther("0.05");
-    const [a, b] = wallets;
+    const [a, b, c] = wallets;
     const war = await hre.viem.deployContract("War", [bet]);
+    const room = 0n; // first join opens table 0; second reuses it
 
     await tx((await at("War", war.address, a)).write.join([], { value: bet, account: a.account }));
     await tx((await at("War", war.address, b)).write.join([], { value: bet, account: b.account }));
 
     // Each peeks their own card; the opponent cannot.
-    const h0 = (await war.read.myCardHandle([0])) as HexString;
-    const h1 = (await war.read.myCardHandle([1])) as HexString;
-    const c0 = (await withRetry<any[]>(() => zap.attestedDecrypt(a, [h0])))[0];
+    const h0 = (await war.read.cardHandle([room, 0])) as HexString;
+    const h1 = (await war.read.cardHandle([room, 1])) as HexString;
+    await withRetry(() => zap.attestedDecrypt(a, [h0]));
     await withRetry(() => zap.attestedDecrypt(b, [h1]));
     let denied = false;
     try {
@@ -60,25 +61,32 @@ describe("ConfidentialDeck examples (Inco covalidator)", function () {
       denied = true;
     }
     expect(denied, "opponent must not read your card").to.equal(true);
-    void c0;
 
     // Open both cards, then read + settle.
-    await tx((await at("War", war.address, a)).write.showdown([], { account: a.account }));
+    await tx((await at("War", war.address, a)).write.showdown([room], { account: a.account }));
     const [r0, r1] = await withRetry<any[]>(() => zap.attestedReveal([h0, h1]));
     await tx(
       (await at("War", war.address, a)).write.settle(
-        [
-          [BigInt(r0.plaintext.value), BigInt(r1.plaintext.value)],
-          [sigOf(r0), sigOf(r1)],
-        ],
+        [room, [BigInt(r0.plaintext.value), BigInt(r1.plaintext.value)], [sigOf(r0), sigOf(r1)]],
         { account: a.account },
       ),
     );
 
-    expect(Number(await war.read.state())).to.equal(3); // Done
+    const info = (await war.read.roomOf([room])) as unknown as any[];
+    expect(Number(info[4])).to.equal(3); // state Done
     const p0 = (await war.read.payout([a.account.address])) as bigint;
     const p1 = (await war.read.payout([b.account.address])) as bigint;
-    expect(p0 + p1).to.equal(bet * 2n); // pot is conserved
+    // Payouts equal the real balance (pot minus the shuffle fee), so claim stays solvent.
+    expect(p0 + p1).to.equal(await pub.getBalance({ address: war.address }));
+    // The winner must actually be able to claim - the part the old test skipped.
+    const winner = p0 >= p1 ? a : b;
+    await tx((await at("War", war.address, winner)).write.claim([], { account: winner.account }));
+    expect((await war.read.payout([winner.account.address])) as bigint).to.equal(0n);
+
+    // Matchmaking: a newcomer joining while table 0 is busy opens table 1.
+    await tx((await at("War", war.address, c)).write.join([], { value: bet, account: c.account }));
+    expect(await war.read.roomCount()).to.equal(2n);
+    expect(Number((await war.read.roomOfPlayer([c.account.address])) as bigint)).to.equal(1);
   });
 
   // Raffle
@@ -115,6 +123,11 @@ describe("ConfidentialDeck examples (Inco covalidator)", function () {
     // Winner is up, net of their own gas.
     expect(after > before[idx]).to.equal(true);
     console.log(`      raffle winner: ticket ${ticket} -> ${winner}`);
+
+    // Replay: reopen ticket sales for a fresh draw.
+    await tx((await at("Raffle", raffle.address, players[0])).write.newRound([], { account: players[0].account }));
+    expect(Number(await raffle.read.state())).to.equal(0); // Selling
+    expect(await raffle.read.entrantCount()).to.equal(0n);
   });
 
   // Mafia
@@ -151,5 +164,10 @@ describe("ConfidentialDeck examples (Inco covalidator)", function () {
       denied = true;
     }
     expect(denied, "roles are private to their owner").to.equal(true);
+
+    // Replay: reset reopens joining for a fresh game.
+    await tx((await at("Mafia", mafia.address, p1)).write.reset([], { account: p1.account }));
+    expect(Number(await mafia.read.state())).to.equal(0); // Joining
+    expect(await mafia.read.playerCount()).to.equal(0n);
   });
 });

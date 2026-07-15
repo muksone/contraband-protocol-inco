@@ -9,6 +9,7 @@ import {ConfidentialDeck} from "../kit/ConfidentialDeck.sol";
 /// @dev Value <= mafiaCount means Mafia. No on-chain settlement.
 contract Mafia is ConfidentialDeck {
     uint16 public immutable mafiaCount;
+    uint256 public round; // a new round reopens joining
     address[] public players;
     mapping(address => euint256) private roleOf; // readable only by its owner
     mapping(address => bool) public seated;
@@ -18,6 +19,7 @@ contract Mafia is ConfidentialDeck {
 
     event Joined(address indexed player);
     event RolesAssigned(uint16 players, uint16 mafia);
+    event NewRound(uint256 round);
 
     constructor(uint16 _mafiaCount) {
         require(_mafiaCount >= 1, "need mafia");
@@ -46,6 +48,18 @@ contract Mafia is ConfidentialDeck {
         }
         state = State.Assigned;
         emit RolesAssigned(n, mafiaCount);
+    }
+
+    /// @notice Reopen joining for a fresh game. Anyone can call once assigned.
+    function reset() external {
+        require(state == State.Assigned, "not assigned");
+        for (uint256 i = 0; i < players.length; i++) {
+            seated[players[i]] = false; // old roleOf entries stay dead until overwritten
+        }
+        delete players;
+        round += 1;
+        state = State.Joining;
+        emit NewRound(round);
     }
 
     /// @notice Your role handle. Mafia iff value <= mafiaCount.

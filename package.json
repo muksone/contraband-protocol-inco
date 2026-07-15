@@ -10,7 +10,15 @@
     "node:up": "docker compose up -d",
     "node:down": "docker compose down",
     "deploy:blackjack:local": "hardhat ignition deploy ignition/modules/Blackjack.ts --network anvil",
-    "deploy:war:local": "hardhat ignition deploy ignition/modules/War.ts --network anvil"
+    "deploy:war:local": "hardhat ignition deploy ignition/modules/War.ts --network anvil",
+    "deploy:war:testnet": "hardhat ignition deploy ignition/modules/War.ts --network baseSepolia",
+    "deploy:blackjack:testnet": "hardhat ignition deploy ignition/modules/Blackjack.ts --network baseSepolia",
+    "deploy:raffle:local": "hardhat ignition deploy ignition/modules/Raffle.ts --network anvil",
+    "deploy:raffle:testnet": "hardhat ignition deploy ignition/modules/Raffle.ts --network baseSepolia",
+    "deploy:mafia:local": "hardhat ignition deploy ignition/modules/Mafia.ts --network anvil",
+    "deploy:mafia:testnet": "hardhat ignition deploy ignition/modules/Mafia.ts --network baseSepolia",
+    "deploy:examples:testnet": "npm run deploy:war:testnet && npm run deploy:blackjack:testnet && npm run deploy:raffle:testnet && npm run deploy:mafia:testnet",
+    "wire:frontend": "node scripts/wire-frontend.mjs"
   },
   "devDependencies": {
     "@inco/lightning-js": "1.0.2",
