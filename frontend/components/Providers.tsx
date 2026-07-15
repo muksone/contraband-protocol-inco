@@ -46,7 +46,7 @@ const Providers = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider theme={rainbowTheme}>{children}</RainbowKitProvider>

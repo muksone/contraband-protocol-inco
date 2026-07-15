@@ -33,3 +33,6 @@ yarn-error.log*
 
 # Testing
 coverage/
+
+# vercel cli
+.vercel
