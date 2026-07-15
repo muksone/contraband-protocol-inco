@@ -18,7 +18,6 @@ const MARK =
 export async function renderOg() {
   const font = await readFile(join(process.cwd(), "app/fonts/DepartureMono-Regular.woff"));
   const mark = `data:image/svg+xml;base64,${Buffer.from(MARK).toString("base64")}`;
-  const games = ["War", "Blackjack", "Raffle", "Mafia"];
 
   return new ImageResponse(
     (
@@ -28,33 +27,19 @@ export async function renderOg() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
+          justifyContent: "center",
           backgroundColor: "#020B20",
           color: "#e6ebff",
           fontFamily: "DepartureMono",
-          padding: 72,
+          padding: 96,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <img src={mark} width={60} height={60} alt="" />
-          <span style={{ fontSize: 26, letterSpacing: 6, color: "#6f8bd6", textTransform: "uppercase" }}>Inco</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
+          <img src={mark} width={48} height={48} alt="" />
+          <span style={{ fontSize: 22, letterSpacing: 6, color: "#6f8bd6", textTransform: "uppercase" }}>inco</span>
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 116, lineHeight: 1, letterSpacing: 2, color: "#3673F5", textTransform: "uppercase" }}>Confidential</div>
-          <div style={{ fontSize: 116, lineHeight: 1, letterSpacing: 2, textTransform: "uppercase" }}>Deck</div>
-          <div style={{ marginTop: 30, fontSize: 30, color: "#8ea3cc", maxWidth: 950 }}>
-            Confidential card games on Inco. Cards are shuffled and dealt by Inco, so a card stays secret until the rules reveal it.
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 14 }}>
-          {games.map((g) => (
-            <div key={g} style={{ display: "flex", border: "1px solid #24468f", color: "#8ea3cc", padding: "10px 20px", fontSize: 22, letterSpacing: 3, textTransform: "uppercase" }}>
-              {g}
-            </div>
-          ))}
-        </div>
+        <div style={{ display: "flex", fontSize: 88, letterSpacing: 1, color: "#3673F5" }}>confidential deck</div>
+        <div style={{ display: "flex", marginTop: 26, fontSize: 28, color: "#8ea3cc" }}>confidential card games on inco</div>
       </div>
     ),
     { ...OG_SIZE, fonts: [{ name: "DepartureMono", data: font, style: "normal", weight: 400 }] }
