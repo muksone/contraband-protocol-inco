@@ -97,9 +97,3 @@ npm run node:down
 > `inconetwork/local-node-{anvil,covalidator}-mainnet:v1.0.2`. A mismatch fails
 > at the elist shuffle with a ciphertext MAC error.
 
-## Honest framing
-
-Fairness and secrecy rest on the Intel TDX enclave and the covalidator
-signature, not zero-knowledge math. The shuffle is protocol-encrypted on-chain,
-not an operator's promise - a strong, real claim, but **not** zk-grade.
-Reference-grade code; audit before real funds.
