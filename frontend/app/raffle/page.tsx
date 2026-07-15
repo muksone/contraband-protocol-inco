@@ -1,6 +1,6 @@
 "use client";
 
-// Raffle: one TEE shuffle picks a hidden winner, revealed at the draw.
+// Raffle: one inco shuffle picks a hidden winner, revealed at the draw.
 import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useReadContract } from "wagmi";
 import { formatEther, type Hex } from "viem";

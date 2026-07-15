@@ -4,8 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAccount } from "wagmi";
 import { GAMES } from "@/lib/games";
+import { SNIPPETS } from "@/lib/snippets";
 import { Panel } from "@/components/ui";
 import { ConnectWallet } from "@/components/ConnectWallet";
+import { CodePeek } from "@/components/CodePeek";
 
 // Header + connect + privacy note wrapper shared by every game page.
 export function GameShell({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -34,6 +36,8 @@ export function GameShell({ slug, children }: { slug: string; children: React.Re
       <p className="border-l-2 border-primary pl-3 text-xs text-muted-foreground">
         <span className="text-primary">secret:</span> {meta.secret}
       </p>
+
+      {SNIPPETS[slug] && <CodePeek code={SNIPPETS[slug]} />}
 
       {isConnected ? (
         <div className="flex flex-col gap-6">{children}</div>

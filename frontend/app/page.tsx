@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { GAMES } from "@/lib/games";
+import { KIT_SNIPPET } from "@/lib/snippets";
+import { CodePeek } from "@/components/CodePeek";
 
 export default function Home() {
   return (
@@ -15,7 +17,7 @@ export default function Home() {
       >
         <h1 className="mb-2 text-xl uppercase tracking-wide text-primary">confidential deck</h1>
         <p className="max-w-xl text-sm text-muted-foreground">
-          Four small games on Inco. The deck is shuffled and dealt inside a TEE, so a card stays
+          Four small games on Inco. The deck is shuffled and dealt by Inco, so a card stays
           secret until the rules reveal it. One contract, four examples to build from.
         </p>
       </motion.div>
@@ -47,6 +49,16 @@ export default function Home() {
           </motion.div>
         ))}
       </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="mt-8"
+      >
+        <p className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">how little it takes</p>
+        <CodePeek code={KIT_SNIPPET} title="the whole confidential surface" />
+      </motion.div>
     </main>
   );
 }
