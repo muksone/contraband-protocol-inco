@@ -33,7 +33,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    // Add your project's X handle here, e.g. site: "@your_handle", creator: "@your_handle".
+    site: "@inconetwork",
+    creator: "@inconetwork",
   },
 };
 
