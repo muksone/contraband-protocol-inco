@@ -111,8 +111,9 @@ Inco's official `create-inco-app --template frontend` and restyled.
 - `hooks/useTx.ts` - one write + receipt wait; toasts on success AND on-chain
   revert; exposes `busy`/`phase`/`hash`.
 - `components/` - `Card` (flip), `GameShell` (header + connect + privacy note),
-  `ConnectWallet` (custom connect + wrong-network button), `ui` (Button, Panel,
-  Step, TxBar, FullScreenLoader).
+  `ConnectWallet` (custom connect + wrong-network button), `Providers` (wagmi +
+  RainbowKit pinned to `darkTheme` so its modal matches the terminal palette),
+  `ui` (Button, Panel, Step, TxBar, FullScreenLoader).
 - `app/<game>/page.tsx` - each game is one self-contained page (read it to see
   the whole flow: deal -> reveal -> settle).
 
@@ -133,8 +134,9 @@ deliberately NOT casino-gamey:
 
 ### Animation
 
-`framer-motion` + `canvas-confetti` (deps present; confetti intentionally unused
-to stay nonchalant). Keep motion subtle:
+`framer-motion` for card flips + a small `canvas-confetti` burst on a win
+(`lib/confetti.ts`, in the terminal palette, `disableForReducedMotion`, fired
+once per hand via a ref guard). Keep motion subtle:
 
 - **Card flip** (`components/Card.tsx`): `motion.div` rotates `rotateY` 0->180 on
   reveal. `initial={false}` is important - the card must NOT animate on mount/

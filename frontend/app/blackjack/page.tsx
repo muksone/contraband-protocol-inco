@@ -12,6 +12,7 @@ import { Card } from "@/components/Card";
 import { Button, Step, TxBar, FullScreenLoader } from "@/components/ui";
 import { GameShell, NoAddress } from "@/components/GameShell";
 import { decodeCard, readPublic, toSettleArgs } from "@/lib/deck";
+import { celebrate } from "@/lib/confetti";
 import { useTx } from "@/hooks/useTx";
 
 const ADDR = ADDRESSES.blackjack as `0x${string}`;
@@ -133,6 +134,13 @@ export default function BlackjackPage() {
     settling.current = true;
     void onSettle();
   }, [state]);
+
+  // Celebrate a win once per hand; re-arm when a new hand starts.
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (state === 3 && winnings > 0n && !celebrated.current) { celebrated.current = true; void celebrate(); }
+    if (state === 1) celebrated.current = false;
+  }, [state, winnings]);
 
   if (!ADDR) return <NoAddress env="NEXT_PUBLIC_BLACKJACK_ADDRESS" />;
 

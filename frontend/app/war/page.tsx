@@ -2,7 +2,7 @@
 
 // War: two players, one private card each, higher rank wins. Auto-matchmaking:
 // join drops you at an open table or opens a new one - never a wait.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useReadContract, useWalletClient } from "wagmi";
 import { formatEther, type Hex } from "viem";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { Card } from "@/components/Card";
 import { Button, Step, TxBar } from "@/components/ui";
 import { GameShell, NoAddress } from "@/components/GameShell";
 import { decodeCard, peek, readPublic, toSettleArgs } from "@/lib/deck";
+import { celebrate } from "@/lib/confetti";
 import { useTx } from "@/hooks/useTx";
 
 const ADDR = ADDRESSES.war as `0x${string}`;
@@ -67,6 +68,14 @@ export default function WarPage() {
     })();
     return () => { cancel = true; };
   }, [state, hasRoom, publicClient]);
+
+  // Celebrate your win once per hand; re-arm before the next hand settles.
+  const celebrated = useRef(false);
+  useEffect(() => {
+    const st = Number(state);
+    if (st === 3 && mySeat >= 0 && winnerSeat === mySeat && !celebrated.current) { celebrated.current = true; void celebrate(); }
+    if (st < 3) celebrated.current = false;
+  }, [state, winnerSeat, mySeat]);
 
   if (!ADDR) return <NoAddress env="NEXT_PUBLIC_WAR_ADDRESS" />;
 

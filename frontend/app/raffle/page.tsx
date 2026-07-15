@@ -1,7 +1,7 @@
 "use client";
 
 // Raffle: one TEE shuffle picks a hidden winner, revealed at the draw.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useReadContract } from "wagmi";
 import { formatEther, type Hex } from "viem";
 import raffleAbi from "@/abi/Raffle.json";
@@ -10,6 +10,7 @@ import { Card } from "@/components/Card";
 import { Button, Step, TxBar } from "@/components/ui";
 import { GameShell, NoAddress } from "@/components/GameShell";
 import { readPublic } from "@/lib/deck";
+import { celebrate } from "@/lib/confetti";
 import { useTx } from "@/hooks/useTx";
 
 const ADDR = ADDRESSES.raffle as `0x${string}`;
@@ -35,6 +36,13 @@ export default function RafflePage() {
   const count = Number(countRaw ?? 0);
   const min = Number(minRaw ?? 0);
   const iWon = !!address && !!winner && (winner as string).toLowerCase() === address.toLowerCase();
+
+  // Celebrate if you drew the winning ticket; re-arm for the next round.
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (state === 2 && iWon && !celebrated.current) { celebrated.current = true; void celebrate(); }
+    if (state === 0) celebrated.current = false;
+  }, [state, iWon]);
 
   if (!ADDR) return <NoAddress env="NEXT_PUBLIC_RAFFLE_ADDRESS" />;
 

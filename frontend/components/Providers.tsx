@@ -1,15 +1,14 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import {
   getDefaultConfig,
   RainbowKitProvider,
   darkTheme,
-  lightTheme,
 } from "@rainbow-me/rainbowkit";
-import { ThemeProvider, useTheme } from "next-themes";
+import { ThemeProvider } from "next-themes";
 import { activeChain } from "@/lib/network";
 
 const queryClient = new QueryClient();
@@ -31,24 +30,13 @@ const config = projectId
       ssr: true,
     });
 
-// Inner provider that uses theme context
-const RainbowKitWithTheme = ({ children }: { children: ReactNode }) => {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const rainbowTheme =
-    mounted && resolvedTheme === "light"
-      ? lightTheme({ accentColor: "#262626", accentColorForeground: "#fafafa", borderRadius: "none" })
-      : darkTheme({ accentColor: "#d4d4d4", accentColorForeground: "#0a0a0a", borderRadius: "none" });
-
-  return (
-    <RainbowKitProvider theme={rainbowTheme}>{children}</RainbowKitProvider>
-  );
-};
+// RainbowKit always renders dark to match the terminal palette (navy + blue).
+const rainbowTheme = darkTheme({
+  accentColor: "#3673F5",
+  accentColorForeground: "#ffffff",
+  borderRadius: "none",
+  overlayBlur: "small",
+});
 
 const Providers = ({ children }: { children: ReactNode }) => {
   if (!projectId) {
@@ -61,7 +49,7 @@ const Providers = ({ children }: { children: ReactNode }) => {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitWithTheme>{children}</RainbowKitWithTheme>
+          <RainbowKitProvider theme={rainbowTheme}>{children}</RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
