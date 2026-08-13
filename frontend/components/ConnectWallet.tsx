@@ -18,7 +18,7 @@ export function ConnectWallet() {
             {!connected ? (
               <button
                 onClick={openConnectModal}
-                className="border-2 border-primary px-3 py-2 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                className="border-2 border-current px-3 py-2 text-current transition-colors hover:bg-current hover:text-primary"
               >
                 connect wallet
               </button>
@@ -33,13 +33,13 @@ export function ConnectWallet() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={openChainModal}
-                  className="border border-border px-2 py-1.5 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                  className="border border-current px-2 py-1.5 text-current transition-colors hover:bg-current hover:text-primary"
                 >
                   {chain.name}
                 </button>
                 <button
                   onClick={openAccountModal}
-                  className="border-2 border-primary px-2 py-1.5 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  className="border-2 border-current px-2 py-1.5 text-current transition-colors hover:bg-current hover:text-primary"
                 >
                   {account.displayName}
                 </button>

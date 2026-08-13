@@ -28,7 +28,7 @@ export function FullScreenLoader({ text }: { text: string }) {
   );
 }
 
-// Square terminal button; outline variant inverts on hover.
+// High-contrast customs button; outline variant stays readable on scanner panels.
 export function Button({
   className,
   variant = "solid",
@@ -37,10 +37,10 @@ export function Button({
   return (
     <button
       className={cn(
-        "px-4 py-2.5 text-sm uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-35",
+        "min-h-11 px-4 py-2.5 text-sm uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-35",
         variant === "solid"
-          ? "bg-primary text-primary-foreground hover:bg-primary/85"
-          : "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground",
+          ? "border-2 border-primary bg-primary text-primary-foreground hover:bg-amber-200"
+          : "border-2 border-cyan-200 text-cyan-100 hover:bg-cyan-200 hover:text-black",
         className,
       )}
       {...props}
@@ -48,10 +48,10 @@ export function Button({
   );
 }
 
-// Bordered navy panel.
+// Bordered scanner panel.
 export function Panel({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("border-2 border-border bg-card/60 p-5 backdrop-blur-sm", className)} {...props} />
+    <div className={cn("border-2 border-border bg-card/80 p-5 backdrop-blur-sm", className)} {...props} />
   );
 }
 
@@ -59,7 +59,7 @@ export function Panel({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 export function TxBar({ text }: { text: string | null }) {
   if (!text) return null;
   return (
-    <div className="flex items-center gap-2 border border-primary/40 bg-primary/5 px-3 py-2 text-xs uppercase tracking-widest text-primary">
+    <div className="mt-4 flex items-center gap-2 border border-amber-300/70 bg-amber-300/10 px-3 py-2 text-xs uppercase tracking-widest text-amber-100">
       <span className="h-1.5 w-1.5 animate-pulse bg-primary" />
       {text}...
     </div>
