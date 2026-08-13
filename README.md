@@ -13,6 +13,8 @@ official examples in `contracts/examples/` for reference. The jam game lives in:
 - `ignition/modules/ContrabandProtocol.ts`
 - `frontend/app/page.tsx`
 
+Live web build: https://contraband.polkahub.xyz
+
 ## Game Loop
 
 1. Shipper calls `openManifest()` with the stake.
