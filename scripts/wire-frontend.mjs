@@ -17,6 +17,7 @@ const addrs = JSON.parse(readFileSync(deployed, "utf8"));
 const pick = (key) => addrs[`${key}#${key}`] || "";
 
 const map = {
+  NEXT_PUBLIC_CONTRABAND_ADDRESS: pick("ContrabandProtocol"),
   NEXT_PUBLIC_WAR_ADDRESS: pick("War"),
   NEXT_PUBLIC_BLACKJACK_ADDRESS: pick("Blackjack"),
   NEXT_PUBLIC_RAFFLE_ADDRESS: pick("Raffle"),

@@ -46,6 +46,23 @@ describe("BlackjackMath (pure)", function () {
   });
 });
 
+describe("ContrabandProtocol cargo table (pure)", function () {
+  let game: any;
+
+  before(async function () {
+    game = await hre.viem.deployContract("ContrabandProtocol", [parseEther("0.003")]);
+  });
+
+  it("maps cargo values into clean, contraband, and artifact bands", async function () {
+    expect(await game.read.cargoType([1n])).to.equal(0);
+    expect(await game.read.cargoType([12n])).to.equal(0);
+    expect(await game.read.cargoType([13n])).to.equal(1);
+    expect(await game.read.cargoType([20n])).to.equal(1);
+    expect(await game.read.cargoType([21n])).to.equal(2);
+    expect(await game.read.cargoType([24n])).to.equal(2);
+  });
+});
+
 describe("Blackjack (Inco covalidator)", function () {
   let zap: any;
   let pub: PublicClient;

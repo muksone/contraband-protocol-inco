@@ -1,5 +1,5 @@
 {
-  "name": "inco-confidential-deck-template",
+  "name": "contraband-protocol-inco",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,8 @@
     "node:up": "docker compose up -d",
     "node:down": "docker compose down",
     "deploy:blackjack:local": "hardhat ignition deploy ignition/modules/Blackjack.ts --network anvil",
+    "deploy:contraband:local": "hardhat ignition deploy ignition/modules/ContrabandProtocol.ts --network anvil",
+    "deploy:contraband:testnet": "hardhat ignition deploy ignition/modules/ContrabandProtocol.ts --network baseSepolia",
     "deploy:war:local": "hardhat ignition deploy ignition/modules/War.ts --network anvil",
     "deploy:war:testnet": "hardhat ignition deploy ignition/modules/War.ts --network baseSepolia",
     "deploy:blackjack:testnet": "hardhat ignition deploy ignition/modules/Blackjack.ts --network baseSepolia",
@@ -64,5 +66,5 @@
       "@safe-global/safe-smart-account": "github:safe-global/safe-smart-account#dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
     }
   },
-  "description": "ConfidentialDeck: reusable Inco primitives for hidden-information games (shuffle, private deal, reveal, attested settle) + worked examples."
+  "description": "Contraband Protocol: a hidden-cargo bluffing game built with Inco ConfidentialDeck."
 }

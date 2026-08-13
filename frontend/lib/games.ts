@@ -23,6 +23,7 @@ export const short = (a?: string) => (a ? `${a.slice(0, 6)}...${a.slice(-4)}` : 
 
 // NEXT_PUBLIC_* must be referenced statically so Next can inline them.
 export const ADDRESSES: Record<string, `0x${string}` | undefined> = {
+  contraband: process.env.NEXT_PUBLIC_CONTRABAND_ADDRESS as `0x${string}` | undefined,
   war: process.env.NEXT_PUBLIC_WAR_ADDRESS as `0x${string}` | undefined,
   blackjack: process.env.NEXT_PUBLIC_BLACKJACK_ADDRESS as `0x${string}` | undefined,
   raffle: process.env.NEXT_PUBLIC_RAFFLE_ADDRESS as `0x${string}` | undefined,

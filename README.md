@@ -1,99 +1,84 @@
-# ConfidentialDeck template
+# Contraband Protocol
 
-A drop-in Inco Hardhat project for building **hidden-information games** - cards,
-raffles, hidden roles. Inherit one base contract, write only your game rules; the
-confidential deck, private deals, public reveals, and trustless settlement come
-for free.
+Contraband Protocol is a hidden-cargo bluffing game for the Inco Summer Game Jam.
+A shipper receives a private cargo card, declares a public manifest, and an
+inspector decides whether to pass the shipment or break the seal. If the cargo is
+inspected, Inco reveals the encrypted handle and the contract settles the pot
+from an attested value.
 
-Built on [Inco Lightning v1](https://docs.inco.org) (TEE-based confidential
-compute - not FHE, not zk). Scaffolded from Inco's official Hardhat template
-(`create-inco-app --template contracts`), pinned to the `1.0.2` package +
-local-node pairing that the elist shuffle needs.
+The project is built from Inco's `confidential-deck-template` and keeps the
+official examples in `contracts/examples/` for reference. The jam game lives in:
 
-## The five moves
+- `contracts/ContrabandProtocol.sol`
+- `ignition/modules/ContrabandProtocol.ts`
+- `frontend/app/page.tsx`
 
-Everything confidential is one call on `ConfidentialDeck`:
+## Game Loop
 
-| Move | Kit call | Under the hood |
-| --- | --- | --- |
-| Shuffle | `_newShuffledDeck(n)` | `e.shuffledRange(1, n+1, ETypes.Uint256)` - one TEE op |
-| Draw | `_draw()` | `e.getEuint256(deck, i)` (+ auto `allowThis`) |
-| Deal (private) | `_dealTo(player)` | `card.allow(player)` - only they decrypt it |
-| Reveal (public) | `_revealCard(c)` / `_dealFaceUp()` | `e.reveal(c)` |
-| Settle | `_verifyValue(c, value, sigs)` | `e.verifyDecryption(...)` - handle-bound |
+1. Shipper calls `openManifest()` with the stake.
+2. `ConfidentialDeck` shuffles a 24-item cargo deck and privately deals one
+   cargo to the shipper with `_dealTo`.
+3. Inspector joins the room with the same stake.
+4. Shipper declares `Clean`, `Contraband`, or `Artifact`.
+5. Inspector either calls `pass()` and the shipper wins without reveal, or calls
+   `inspect()` to make the cargo public.
+6. `settle()` verifies the revealed value with Inco covalidator signatures. A
+   truthful manifest pays the shipper; a false manifest pays the inspector.
 
-## Layout
+Cargo distribution:
 
-```
-contracts/
-  kit/ConfidentialDeck.sol   the base contract you inherit (the whole confidential surface)
-  CardLib.sol                optional 52-card rank/suit decoding
-  examples/
-    Blackjack.sol (+ BlackjackMath.sol)  private hand, hit loop, reveal, attested settle
-    War.sol                              the ~50-line "hello world"
-    Raffle.sol                           non-card: hidden winner from one shuffle
-    Mafia.sol                            selective per-player secret roles
-client/
-  incoDeckClient.ts          peekMyCards / readRevealed / packForSettle (frontend half)
-test/                        pure units (no Docker) + full games vs a real covalidator
-ignition/modules/            Ignition deploy modules
-RECIPES.md                   copy-paste snippets, one per move
-```
+- values `1..12`: clean cargo
+- values `13..20`: contraband
+- values `21..24`: artifact
 
-## A whole game in ~15 lines
+## Why Inco Matters
 
-```solidity
-import {euint256} from "@inco/lightning/src/Lib.sol";
-import {ConfidentialDeck} from "./kit/ConfidentialDeck.sol";
+The game only works if the shipper can privately see a cargo value while the
+inspector cannot. The contract stores only an encrypted handle until the
+inspector chooses to reveal it. Settlement uses `_verifyValue`, so a player
+cannot substitute a value from another cargo handle.
 
-contract War is ConfidentialDeck {
-    mapping(address => euint256) public myCard;
-
-    function startRound() external payable {
-        require(msg.value >= deckFee(52), "fee");
-        _newShuffledDeck(52);
-    }
-    function draw() external {
-        myCard[msg.sender] = _dealTo(msg.sender); // only the caller can peek it
-    }
-    // showdown + _verifyValue(...) to settle
-}
-```
-
-Frontend:
-
-```ts
-import { getZap, peekMyCards, decodeCard } from "./client/incoDeckClient";
-
-const zap = await getZap({ local: true });
-const [c0, c1] = await peekMyCards(zap, wallet, handles);
-console.log(decodeCard(c0.value).label); // e.g. "A♠"
-```
-
-## The four worked examples
-
-Each is a full, tested game - read them to see the kit assembled:
-
-- **[Blackjack](contracts/examples/Blackjack.sol)** - private hand, hit loop, public dealer upcard, reveal-all, attested settle, pull payout.
-- **[War](contracts/examples/War.sol)** - the smallest game: one private card each, higher rank wins.
-- **[Raffle](contracts/examples/Raffle.sol)** - the kit isn't just for cards: one shuffle picks a hidden winner, revealed at the draw.
-- **[Mafia](contracts/examples/Mafia.sol)** - selective reveal: each player privately learns only their own role.
-
-See **[RECIPES.md](RECIPES.md)** for copy-paste snippets, one per move.
-
-## Build & test
+## Local Setup
 
 ```bash
-npm install                # @inco/lightning + @inco/lightning-js v1.0.2
+npm install
 npm run compile
 
-npm test                   # pure-logic units (blackjack scoring) - no Docker
-npm run node:up            # docker compose up -d (anvil + covalidator v1.0.2)
-npm run test:local         # 8 tests: units + Blackjack/War/Raffle/Mafia end-to-end
-npm run node:down
+cd frontend
+npm install
+npm run build
 ```
 
-> Package and image versions must match: `@inco/lightning{,-js}@1.0.2` with
-> `inconetwork/local-node-{anvil,covalidator}-mainnet:v1.0.2`. A mismatch fails
-> at the elist shuffle with a ciphertext MAC error.
+## Deploy to Base Sepolia
 
+Create `.env` in the repository root:
+
+```bash
+PRIVATE_KEY_BASE_SEPOLIA=
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+```
+
+Deploy and wire the frontend:
+
+```bash
+npm run deploy:contraband:testnet
+npm run wire:frontend
+```
+
+Then add a WalletConnect project id in `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_NETWORK=testnet
+NEXT_PUBLIC_CONTRABAND_ADDRESS=0x...
+```
+
+## Run the Web Game
+
+```bash
+cd frontend
+npm run dev
+```
+
+The first screen is the game itself. It includes a live wallet table and a demo
+scanner panel for recording a quick video without needing a second wallet.

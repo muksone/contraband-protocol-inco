@@ -1,7 +1,7 @@
 {
-  "name": "confidential-deck-frontend",
+  "name": "contraband-protocol-frontend",
   "version": "1.0.0",
-  "description": "Demo frontend for the ConfidentialDeck examples (War, Blackjack, Raffle, Mafia).",
+  "description": "Web frontend for Contraband Protocol, an Inco hidden-cargo bluffing game.",
   "main": "index.js",
   "author": "",
   "license": "MIT",
