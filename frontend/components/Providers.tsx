@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http } from "wagmi";
+import { injected } from "wagmi/connectors";
 import {
   getDefaultConfig,
   RainbowKitProvider,
@@ -24,6 +25,7 @@ const config = projectId
     })
   : createConfig({
       chains: [activeChain],
+      connectors: [injected()],
       transports: {
         [activeChain.id]: http(),
       },

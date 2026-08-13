@@ -15,6 +15,9 @@ official examples in `contracts/examples/` for reference. The jam game lives in:
 
 Live web build: https://contraband.polkahub.xyz
 
+Base Sepolia contract:
+`0x098825B008C60EA3A5ab5422dA1e71E2D1f047c5`
+
 ## Game Loop
 
 1. Shipper calls `openManifest()` with the stake.
