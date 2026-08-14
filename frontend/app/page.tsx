@@ -230,27 +230,51 @@ export default function Home() {
           <div className="px-4 py-3">Pot <span className="ml-2 text-amber-200">{formatEther(pot)} ETH</span></div>
         </div>
 
-        <div className="border-b-2 border-amber-300 bg-[linear-gradient(135deg,rgba(251,191,36,0.24),rgba(8,47,73,0.74)_48%,rgba(0,0,0,0.94))] px-4 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center border-2 border-amber-300 bg-amber-300 text-black">
-                <Bot size={23} />
+        <div className="relative overflow-hidden border-b-2 border-cyan-200/70 bg-[radial-gradient(circle_at_12%_10%,rgba(34,211,238,0.38),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(251,191,36,0.36),transparent_26%),linear-gradient(135deg,rgba(2,6,23,0.92),rgba(8,47,73,0.86)_48%,rgba(0,0,0,0.96))] px-4 py-5">
+          <div className="scanner-grid absolute inset-0 opacity-35" />
+          <motion.div
+            className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-cyan-200/22 to-transparent blur-sm"
+            animate={{ x: ["-80%", "280%"] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "linear" }}
+          />
+          <div className="relative z-10 overflow-hidden border border-white/30 bg-white/[0.11] p-4 shadow-[0_0_48px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl lg:p-5">
+            <div className="pointer-events-none absolute inset-px border border-cyan-200/20" />
+            <div className="absolute right-4 top-4 hidden border border-amber-200/50 bg-amber-200/12 px-2 py-1 text-[10px] uppercase tracking-[0.28em] text-amber-100 sm:block">
+              Gemini enabled
+            </div>
+            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="grid h-14 w-14 shrink-0 place-items-center border-2 border-cyan-100/90 bg-cyan-100/18 text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.5)] backdrop-blur-md">
+                  <Bot size={30} />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.34em] text-cyan-100">Live on-chain mode available</p>
+                  <h2 className="mt-1 text-3xl uppercase tracking-wide text-white sm:text-4xl">Play against the AI Inspector</h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-white/78">
+                    The main demo explains the loop. The <span className="border border-amber-200/40 bg-amber-200/10 px-1.5 py-0.5 text-amber-100">/exist</span> lane runs the full version:
+                    your wallet signs shipper transactions, Gemini chooses the inspector action, and a funded AI wallet sends the second-player transactions on Base Sepolia.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.34em] text-amber-200">Live on-chain mode available</p>
-                <h2 className="mt-1 text-2xl uppercase tracking-wide text-white">Play against the AI Inspector</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/74">
-                  The main demo explains the loop. The <span className="text-amber-200">/exist</span> lane runs the full version:
-                  your wallet signs shipper transactions, Gemini chooses the inspector action, and a funded AI wallet sends the second-player transactions on Base Sepolia.
-                </p>
+              <div className="grid gap-3 sm:min-w-64">
+                <div className="grid grid-cols-2 gap-2 text-[10px] uppercase tracking-widest text-white/68">
+                  <div className="border border-white/20 bg-black/28 px-2 py-2 backdrop-blur-md">
+                    <span className="block text-cyan-100">Wallet tx</span>
+                    shipper
+                  </div>
+                  <div className="border border-white/20 bg-black/28 px-2 py-2 backdrop-blur-md">
+                    <span className="block text-amber-100">AI tx</span>
+                    inspector
+                  </div>
+                </div>
+                <a
+                  href="/exist"
+                  className="group inline-flex min-h-13 items-center justify-center gap-2 border-2 border-amber-200 bg-amber-200 px-4 py-3 text-sm uppercase tracking-widest text-black shadow-[0_0_26px_rgba(251,191,36,0.35)] transition-colors hover:bg-white"
+                >
+                  Launch live AI mode <ExternalLink className="transition-transform group-hover:translate-x-0.5" size={15} />
+                </a>
               </div>
             </div>
-            <a
-              href="/exist"
-              className="inline-flex min-h-12 items-center justify-center gap-2 border-2 border-amber-300 bg-amber-300 px-4 py-2 text-sm uppercase tracking-widest text-black transition-colors hover:bg-white"
-            >
-              Launch live AI mode <ExternalLink size={15} />
-            </a>
           </div>
         </div>
 
