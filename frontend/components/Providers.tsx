@@ -41,17 +41,13 @@ const rainbowTheme = darkTheme({
 });
 
 const Providers = ({ children }: { children: ReactNode }) => {
-  if (!projectId) {
-    console.warn(
-      "Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID. Get one at https://cloud.walletconnect.com/"
-    );
-  }
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider theme={rainbowTheme}>{children}</RainbowKitProvider>
+          <RainbowKitProvider locale="en-US" theme={rainbowTheme}>
+            {children}
+          </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
