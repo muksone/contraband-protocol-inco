@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, BadgeCheck, ClipboardCheck, PackageOpen, ScanLine, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Bot, ClipboardCheck, ExternalLink, PackageOpen, ScanLine, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatEther, zeroAddress, type Hex } from "viem";
 import { useAccount, usePublicClient, useReadContract, useWalletClient } from "wagmi";
@@ -228,6 +228,30 @@ export default function Home() {
           <div className="border-b border-white/15 px-4 py-3 sm:border-b-0 sm:border-r">Role <span className="ml-2 text-amber-200">{role}</span></div>
           <div className="border-b border-white/15 px-4 py-3 sm:border-b-0 sm:border-r">State <span className="ml-2 text-amber-200">{STATE[state] ?? "Idle"}</span></div>
           <div className="px-4 py-3">Pot <span className="ml-2 text-amber-200">{formatEther(pot)} ETH</span></div>
+        </div>
+
+        <div className="border-b-2 border-amber-300 bg-[linear-gradient(135deg,rgba(251,191,36,0.24),rgba(8,47,73,0.74)_48%,rgba(0,0,0,0.94))] px-4 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center border-2 border-amber-300 bg-amber-300 text-black">
+                <Bot size={23} />
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.34em] text-amber-200">Live on-chain mode available</p>
+                <h2 className="mt-1 text-2xl uppercase tracking-wide text-white">Play against the AI Inspector</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-white/74">
+                  The main demo explains the loop. The <span className="text-amber-200">/exist</span> lane runs the full version:
+                  your wallet signs shipper transactions, Gemini chooses the inspector action, and a funded AI wallet sends the second-player transactions on Base Sepolia.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/exist"
+              className="inline-flex min-h-12 items-center justify-center gap-2 border-2 border-amber-300 bg-amber-300 px-4 py-2 text-sm uppercase tracking-widest text-black transition-colors hover:bg-white"
+            >
+              Launch live AI mode <ExternalLink size={15} />
+            </a>
+          </div>
         </div>
 
         <div className="p-4">
